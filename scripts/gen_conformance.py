@@ -4,13 +4,16 @@
 """Generates MoonBit conformance tests from the vendored toml-test suite.
 
 Reads toml-test-tests/{valid,invalid} and emits:
-  - conformance_data.mbt : case sources and expected values as MoonBit literals
-  - conformance_test.mbt : one MoonBit test per suite case
+  - conformance_data_test.mbt : case sources and expected values as MoonBit literals
+  - conformance_test.mbt      : one MoonBit test per suite case
+  - conformance_run_test.mbt  : the shared check_valid_case/check_invalid_case helpers
 
 The expected tagged JSON of toml-test is converted into the library's own
 `Value` model at generation time, so the generated tests compare parsed
 documents structurally via `Value::equal` (order-insensitive tables, NaN
 equality, datetime component equality).
+
+After regenerating, run `moon fmt` so the format check in CI stays green.
 """
 
 import json

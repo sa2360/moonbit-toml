@@ -12,18 +12,11 @@
 /// (the error message goes to stderr).
 fn main raise {
   let args = @env.args()
-  let mut file : String? = None
-  for arg in args {
-    // Skip the program path itself (first argument on native targets).
-    if arg == args[0] {
-      continue
-    }
-    file = Some(arg)
-    break
-  }
-  let path = match file {
-    Some(path) => path
-    None => abort("usage: toml2json <file.toml>")
+  // The file to convert is expected as the last command line argument.
+  let path = if args.length() >= 2 {
+    args[args.length() - 1]
+  } else {
+    abort("usage: toml2json <file.toml>")
   }
   let bytes = @fs.read_file_to_bytes(path)
   let text = decode_utf8_strict(bytes)
@@ -84,8 +77,9 @@ fn decode_utf8_strict(bytes : Bytes) -> String raise {
 }
 
 ///|
-/// Reads one continuation byte (0x80..0xBF) at `i`.
-fn cont(bytes : Bytes, i : Int, len : Int) -> Int raise {
+/// Reads one continuation byte (0x80..0xBF) at `i`, aborting when missing
+/// or malformed.
+fn cont(bytes : Bytes, i : Int, len : Int) -> Int {
   if i >= len {
     abort("truncated UTF-8 sequence at byte \{i}")
   }
