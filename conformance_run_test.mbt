@@ -13,16 +13,25 @@ fn check_valid_case(i : Int) -> Unit raise {
   }
   let got : Value = Value::Table(doc)
   if !got.equal(expected) {
-    fail("toml-test valid case '\{name}' mismatch\n  got:      \{encode_value(got)}\n  expected: \{encode_value(expected)}")
+    fail(
+      "toml-test valid case '\{name}' mismatch\n  got:      \{encode_value(got)}\n  expected: \{encode_value(expected)}",
+    )
   }
   // Round trip: encode the parsed document, parse it again and
   // require an equal result.
   let encoded = encode(doc)
-  let reparsed : Value = Value::Table(parse(encoded) catch {
-    err => fail("toml-test valid case '\{name}' failed to round trip: \{err.message()}\n  encoded: \{encoded}")
-  })
+  let reparsed : Value = Value::Table(
+    parse(encoded) catch {
+      err =>
+        fail(
+          "toml-test valid case '\{name}' failed to round trip: \{err.message()}\n  encoded: \{encoded}",
+        )
+    },
+  )
   if !reparsed.equal(got) {
-    fail("toml-test valid case '\{name}' round trip mismatch\n  encoded: \{encoded}\n  got:      \{encode_value(got)}\n  reparsed: \{encode_value(reparsed)}")
+    fail(
+      "toml-test valid case '\{name}' round trip mismatch\n  encoded: \{encoded}\n  got:      \{encode_value(got)}\n  reparsed: \{encode_value(reparsed)}",
+    )
   }
 }
 
