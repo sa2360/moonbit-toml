@@ -19,6 +19,9 @@ jobs:
       - name: moon version
         run: moon version
 
+      - name: Update registry index
+        run: moon update
+
       - name: Format check
         run: |
           moon fmt
