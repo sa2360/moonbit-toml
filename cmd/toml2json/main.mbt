@@ -29,7 +29,8 @@ fn main raise {
 ///|
 /// Decodes UTF-8 bytes into a String, rejecting invalid sequences
 /// (bad continuation bytes, surrogates, overlong encodings, > U+10FFFF).
-fn decode_utf8_strict(bytes : Bytes) -> String raise {
+/// Invalid input aborts with a message on stderr.
+fn decode_utf8_strict(bytes : Bytes) -> String {
   let sb = StringBuilder::StringBuilder()
   let len = bytes.length()
   let mut i = 0
