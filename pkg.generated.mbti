@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "moonbit-toml/toml"
+package "sa2360/toml"
 
 import {
   "moonbitlang/core/debug",

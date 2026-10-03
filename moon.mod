@@ -1,10 +1,10 @@
-name = "moonbit-toml/toml"
+name = "sa2360/toml"
 
 version = "0.1.0"
 
 readme = "README.md"
 
-repository = "https://github.com/moonbit-toml/moonbit-toml"
+repository = "https://github.com/sa2360/moonbit-toml"
 
 license = "MIT"
 

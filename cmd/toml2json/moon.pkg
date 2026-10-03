@@ -1,5 +1,5 @@
 import {
-  "moonbit-toml/toml",
+  "sa2360/toml",
   "moonbitlang/x/fs",
   "moonbitlang/core/env",
 }

@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "moonbit-toml/toml/cmd/toml2json"
+package "sa2360/toml/cmd/toml2json"
 
 // Values
 

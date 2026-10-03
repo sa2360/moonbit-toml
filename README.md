@@ -14,7 +14,7 @@ A [TOML v1.0.0](https://toml.io/en/v1.0.0) parser and serializer for [MoonBit](h
 ## Usage
 
 ```moonbit
-// moon.mod: import { "moonbit-toml/toml" }
+// moon.mod: import { "sa2360/toml" }
 ```
 
 ### Parsing
