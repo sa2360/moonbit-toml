@@ -46,20 +46,33 @@ test "to_json arrays and objects parse back" {
   )
   let json = Value::Table(doc).to_json()
   let back = @json.parse(json.stringify())
-  let obj = back.as_object().unwrap()
+  let obj = match back {
+    Object(m) => m
+    _ => abort("expected object")
+  }
   @debug.assert_eq(obj.contains("nums"), true)
   @debug.assert_eq(obj.contains("owner"), true)
-  let nums = obj["nums"].as_array().unwrap()
+  let nums = match obj["nums"] {
+    Array(items) => items
+    _ => abort("expected array")
+  }
   @debug.assert_eq(nums.length(), 3)
   let first = match nums[0] {
-    Number(n) => n
+    Number(n, ..) => n
     _ => abort("expected number")
   }
   @debug.assert_eq(first, 1.0)
-  let owner = obj["owner"].as_object().unwrap()
-  @debug.assert_eq(owner["name"].as_string().unwrap(), "Tom")
+  let owner = match obj["owner"] {
+    Object(m) => m
+    _ => abort("expected object")
+  }
+  let name = match owner["name"] {
+    String(s) => s
+    _ => abort("expected string")
+  }
+  @debug.assert_eq(name, "Tom")
   let age = match owner["age"] {
-    Number(n) => n
+    Number(n, ..) => n
     _ => abort("expected number")
   }
   @debug.assert_eq(age, 30.0)
