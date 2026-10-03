@@ -219,14 +219,15 @@ def main():
     )
     data.append("")
     data.append("///|")
-    data.append("pub let valid_cases : Array[(String, String, Value)] = [")
+    data.append("// Test data lives in the test package; it is not part of the public API.")
+    data.append("let valid_cases : Array[(String, String, Value)] = [")
     for name, src, expected in valid:
         data.append(f"  // toml-test valid: {name}")
         data.append(f"  ({lit(name)}, {lit(src)}, {expected}),")
     data.append("]")
     data.append("")
     data.append("///|")
-    data.append("pub let invalid_cases : Array[(String, String)] = [")
+    data.append("let invalid_cases : Array[(String, String)] = [")
     for name, src in invalid:
         data.append(f"  ({lit(name)}, {lit(src)}),")
     data.append("]")
@@ -237,7 +238,7 @@ def main():
         for name in skipped:
             data.append(f"//   {name}")
         data.append("")
-    (ROOT / "conformance_data.mbt").write_text("\n".join(data), encoding="utf-8")
+    (ROOT / "conformance_data_test.mbt").write_text("\n".join(data), encoding="utf-8")
 
     tests = []
     tests.append(
@@ -258,7 +259,7 @@ def main():
         tests.append("}")
         tests.append("")
     (ROOT / "conformance_test.mbt").write_text("\n".join(tests), encoding="utf-8")
-    print(f"wrote conformance_data.mbt and conformance_test.mbt")
+    print(f"wrote conformance_data_test.mbt and conformance_test.mbt")
 
     runner = []
     runner.append("// Copyright 2026 moonbit-toml contributors")

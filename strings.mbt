@@ -14,7 +14,8 @@ fn Scanner::parse_string_value(self : Scanner) -> String raise ParseError {
     let multiline = self.peek_at(1) == Some('"') && self.peek_at(2) == Some('"')
     self.parse_basic_string(multiline)
   } else if c == '\'' {
-    let multiline = self.peek_at(1) == Some('\'') && self.peek_at(2) == Some('\'')
+    let multiline = self.peek_at(1) == Some('\'') &&
+      self.peek_at(2) == Some('\'')
     self.parse_literal_string(multiline)
   } else {
     raise self.error_here(InvalidValue(self.here(), c))
@@ -104,7 +105,10 @@ fn Scanner::parse_basic_string(
         self.parse_escape(sb, multiline=false)
       } else if c == '\n' || c == '\r' {
         raise self.error_here(
-          InvalidSyntax(self.here(), "newline is not allowed in a single-line string"),
+          InvalidSyntax(
+            self.here(),
+            "newline is not allowed in a single-line string",
+          ),
         )
       } else if is_forbidden_control(c) {
         raise self.error_here(UnexpectedChar(self.here(), c))
@@ -190,7 +194,10 @@ fn Scanner::parse_literal_string(
         return sb.to_string()
       } else if c == '\n' || c == '\r' {
         raise self.error_here(
-          InvalidSyntax(self.here(), "newline is not allowed in a single-line string"),
+          InvalidSyntax(
+            self.here(),
+            "newline is not allowed in a single-line string",
+          ),
         )
       } else if is_forbidden_control(c) {
         raise self.error_here(UnexpectedChar(self.here(), c))
@@ -309,13 +316,17 @@ fn Scanner::parse_unicode_escape(
     }
     value = value * 16L + Int64::from_int(hex_value(c))
     if value > 0x10FFFFL {
-      raise self.error_here(InvalidUnicodeEscape(self.here(), self.text_since(start)))
+      raise self.error_here(
+        InvalidUnicodeEscape(self.here(), self.text_since(start)),
+      )
     }
     ignore(self.bump())
   }
   // Surrogates are not Unicode scalar values.
   if value >= 0xD800L && value <= 0xDFFFL {
-    raise self.error_here(InvalidUnicodeEscape(self.here(), self.text_since(start)))
+    raise self.error_here(
+      InvalidUnicodeEscape(self.here(), self.text_since(start)),
+    )
   }
   value.to_int().to_char().unwrap_or('\u{FFFD}')
 }

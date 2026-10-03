@@ -78,12 +78,12 @@ pub(all) enum Value {
 ///|
 /// Creates an empty table.
 pub fn Table::new() -> Table {
-  { entries: Map([]), order: [], defined: Implicit, aot: false }
+  { entries: Map([]), order: [], defined: Implicit, aot: false, }
 }
 
 ///|
 fn Table::make(defined : Definedness) -> Table {
-  { entries: Map([]), order: [], defined, aot: false }
+  { entries: Map([]), order: [], defined, aot: false, }
 }
 
 ///|
@@ -189,10 +189,7 @@ fn Table::equal_values(self : Table, other : Table) -> Bool {
   }
   for k in self.order {
     match (self.entries.get(k), other.entries.get(k)) {
-      (Some(a), Some(b)) =>
-        if !a.equal(b) {
-          return false
-        }
+      (Some(a), Some(b)) => if !a.equal(b) { return false }
       _ => return false
     }
   }

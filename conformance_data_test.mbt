@@ -3,7 +3,8 @@
 
 
 ///|
-pub let valid_cases : Array[(String, String, Value)] = [
+// Test data lives in the test package; it is not part of the public API.
+let valid_cases : Array[(String, String, Value)] = [
   // toml-test valid: array/array
   ("array/array", "ints = [1, 2, 3, ]\nfloats = [1.1, 2.1, 3.1]\nstrings = [\"a\", \"b\", \"c\"]\ndates = [\n  1987-07-05T17:45:00Z,\n  1979-05-27T07:32:00Z,\n  2006-06-01T11:00:00Z,\n]\ncomments = [\n         1,\n         2, #this is ok\n]\n", Value::Table(Table::from_array([("comments", Value::Array([Value::Int(1L), Value::Int(2L)])), ("dates", Value::Array([Value::Datetime({ date: Some({ year: 1987, month: 7, day: 5 }), time: Some({ hour: 17, minute: 45, second: 0, nanos: 0 }), offset: 0, has_offset: true }), Value::Datetime({ date: Some({ year: 1979, month: 5, day: 27 }), time: Some({ hour: 7, minute: 32, second: 0, nanos: 0 }), offset: 0, has_offset: true }), Value::Datetime({ date: Some({ year: 2006, month: 6, day: 1 }), time: Some({ hour: 11, minute: 0, second: 0, nanos: 0 }), offset: 0, has_offset: true })])), ("floats", Value::Array([Value::Float(1.1), Value::Float(2.1), Value::Float(3.1)])), ("ints", Value::Array([Value::Int(1L), Value::Int(2L), Value::Int(3L)])), ("strings", Value::Array([Value::Str("a"), Value::Str("b"), Value::Str("c")]))]))),
   // toml-test valid: array/bool
@@ -199,7 +200,7 @@ pub let valid_cases : Array[(String, String, Value)] = [
 ]
 
 ///|
-pub let invalid_cases : Array[(String, String)] = [
+let invalid_cases : Array[(String, String)] = [
   ("array/missing-separator", "wrong = [ 1 2 3 ]\n"),
   ("array/no-close-2", "x = [42 #\n"),
   ("array/no-close-table-2", "x = [{ key = 42 #\n"),

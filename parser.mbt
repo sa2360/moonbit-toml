@@ -17,7 +17,7 @@ priv struct Parser {
 pub fn parse(input : String) -> Table raise ParseError {
   let sc = Scanner::make(input)
   let root = Table::make(Explicit)
-  let parser = { sc, root, cur: root }
+  let parser = { sc, root, cur: root, }
   parser.parse_document()
   root
 }
@@ -31,7 +31,9 @@ pub fn parse_value(input : String) -> Value raise ParseError {
   let v = sc.parse_value()
   sc.skip_ws_newlines_comments()
   if !sc.at_eof() {
-    raise sc.error_here(InvalidSyntax(sc.here(), "trailing characters after value"))
+    raise sc.error_here(
+      InvalidSyntax(sc.here(), "trailing characters after value"),
+    )
   }
   v
 }
@@ -49,9 +51,7 @@ fn Parser::parse_document(self : Parser) -> Unit raise ParseError {
         self.sc.skip_comment()
         self.sc.expect_line_end()
       }
-      Some('\n') | Some('\r') => {
-        ignore(self.sc.newline())
-      }
+      Some('\n') | Some('\r') => ignore(self.sc.newline())
       Some('[') => self.parse_table_header()
       Some(_) => {
         self.parse_keyval(self.cur)
@@ -78,7 +78,10 @@ fn Parser::parse_table_header(self : Parser) -> Unit raise ParseError {
   if is_aot {
     if !self.sc.bump_if(']') {
       raise self.sc.error_here(
-        InvalidSyntax(self.sc.here(), "expected ']]' to close the array-of-tables header"),
+        InvalidSyntax(
+          self.sc.here(),
+          "expected ']]' to close the array-of-tables header",
+        ),
       )
     }
   }
@@ -224,7 +227,9 @@ fn Scanner::parse_inline_table(self : Scanner) -> Value raise ParseError {
     let path = self.parse_key_path()
     self.skip_inline_ws()
     if !self.bump_if('=') {
-      raise self.error_here(InvalidSyntax(self.here(), "expected '=' after key"))
+      raise self.error_here(
+        InvalidSyntax(self.here(), "expected '=' after key"),
+      )
     }
     self.skip_inline_ws()
     let value = self.parse_value()
@@ -235,7 +240,10 @@ fn Scanner::parse_inline_table(self : Scanner) -> Value raise ParseError {
       // A newline is not allowed between inline table entries.
       if self.peek() == Some('\n') || self.peek() == Some('\r') {
         raise self.error_here(
-          InvalidSyntax(self.here(), "inline tables must be written on a single line"),
+          InvalidSyntax(
+            self.here(),
+            "inline tables must be written on a single line",
+          ),
         )
       }
       continue
@@ -246,7 +254,10 @@ fn Scanner::parse_inline_table(self : Scanner) -> Value raise ParseError {
     match self.peek() {
       Some('\n') | Some('\r') =>
         raise self.error_here(
-          InvalidSyntax(self.here(), "inline tables must be written on a single line"),
+          InvalidSyntax(
+            self.here(),
+            "inline tables must be written on a single line",
+          ),
         )
       Some(c) => raise self.error_here(UnexpectedChar(self.here(), c))
       None => raise self.error_here(UnexpectedEof(self.here()))
@@ -257,7 +268,11 @@ fn Scanner::parse_inline_table(self : Scanner) -> Value raise ParseError {
 
 ///|
 /// Applies a `[table]` header at `path`, enforcing TOML definition rules.
-fn Parser::define_table(self : Parser, path : Array[String], pos : Position) -> Unit raise ParseError {
+fn Parser::define_table(
+  self : Parser,
+  path : Array[String],
+  pos : Position,
+) -> Unit raise ParseError {
   let key_chain = join_key_path(path)
   let final_idx = path.length() - 1
   let mut t = self.root
@@ -273,12 +288,9 @@ fn Parser::define_table(self : Parser, path : Array[String], pos : Position) -> 
           sub.defined = Explicit
           self.cur = sub
         }
-        Explicit =>
-          raise self.sc.error_here(DuplicateKey(pos, key_chain))
-        Dotted =>
-          raise self.sc.error_here(TableConflict(pos, key_chain))
-        Inline =>
-          raise self.sc.error_here(TableConflict(pos, key_chain))
+        Explicit => raise self.sc.error_here(DuplicateKey(pos, key_chain))
+        Dotted => raise self.sc.error_here(TableConflict(pos, key_chain))
+        Inline => raise self.sc.error_here(TableConflict(pos, key_chain))
       }
     Some(_) => raise self.sc.error_here(DuplicateKey(pos, key_chain))
     None => {
@@ -336,8 +348,7 @@ fn Parser::navigate(
   match t.get(k) {
     Some(Value::Table(sub)) =>
       match sub.defined {
-        Inline =>
-          raise self.sc.error_here(TableConflict(pos, key_chain))
+        Inline => raise self.sc.error_here(TableConflict(pos, key_chain))
         _ => sub
       }
     Some(Value::Array(items)) =>
@@ -377,9 +388,7 @@ fn is_array_of_tables(items : Array[Value]) -> Bool {
   let mut all = items.length() > 0
   for item in items {
     match item {
-      Value::Table(t) => if !t.aot {
-        all = false
-      }
+      Value::Table(t) => if !t.aot { all = false }
       _ => all = false
     }
   }
@@ -404,12 +413,10 @@ fn insert_dotted(
     match t.get(k) {
       Some(Value::Table(sub)) =>
         match sub.defined {
-          Inline =>
-            raise ParseError(TableConflict(pos, key_chain))
+          Inline => raise ParseError(TableConflict(pos, key_chain))
           _ => t = sub
         }
-      Some(_) =>
-        raise ParseError(DuplicateKey(pos, key_chain))
+      Some(_) => raise ParseError(DuplicateKey(pos, key_chain))
       None => {
         let sub = Table::make(Dotted)
         t.set(k, Value::Table(sub))

@@ -8,7 +8,7 @@ repository = "https://github.com/moonbit-toml/moonbit-toml"
 
 license = "MIT"
 
-keywords = ["toml", "parser", "config", "serialization"]
+keywords = [ "toml", "parser", "config", "serialization" ]
 
 preferred_target = "wasm"
 

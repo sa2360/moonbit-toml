@@ -27,9 +27,7 @@ fn main raise {
   }
   let bytes = @fs.read_file_to_bytes(path)
   let text = decode_utf8_strict(bytes)
-  let doc = @toml.parse(text) catch {
-    err => abort(err.message())
-  }
+  let doc = @toml.parse(text) catch { err => abort(err.message()) }
   let sb = StringBuilder::StringBuilder()
   emit_tagged(sb, @toml.Value::Table(doc))
   println(sb.to_string())
@@ -49,7 +47,9 @@ fn decode_utf8_strict(bytes : Bytes) -> String raise {
       i += 1
     } else if b0 >= 0xC2 && b0 <= 0xDF {
       let b1 = cont(bytes, i + 1, len)
-      sb.write_char((((b0 & 0x1F) << 6) | (b1 & 0x3F)).to_char().unwrap_or('\u{FFFD}'))
+      sb.write_char(
+        (((b0 & 0x1F) << 6) | (b1 & 0x3F)).to_char().unwrap_or('\u{FFFD}'),
+      )
       i += 2
     } else if b0 >= 0xE0 && b0 <= 0xEF {
       let b1 = cont(bytes, i + 1, len)
@@ -69,7 +69,10 @@ fn decode_utf8_strict(bytes : Bytes) -> String raise {
       }
       let b2 = cont(bytes, i + 2, len)
       let b3 = cont(bytes, i + 3, len)
-      let cp = ((b0 & 0x07) << 18) | ((b1 & 0x3F) << 12) | ((b2 & 0x3F) << 6) | (b3 & 0x3F)
+      let cp = ((b0 & 0x07) << 18) |
+        ((b1 & 0x3F) << 12) |
+        ((b2 & 0x3F) << 6) |
+        (b3 & 0x3F)
       sb.write_char(cp.to_char().unwrap_or('\u{FFFD}'))
       i += 4
     } else {
@@ -209,11 +212,13 @@ fn unicode_escape_json(code : Int) -> String {
   sb.write_string("\\u")
   for shift in [12, 8, 4, 0] {
     let d = (code >> shift) & 0xF
-    sb.write_char(if d < 10 {
-      (0x30 + d).to_char().unwrap_or('0')
-    } else {
-      (0x41 + d - 10).to_char().unwrap_or('A')
-    })
+    sb.write_char(
+      if d < 10 {
+        (0x30 + d).to_char().unwrap_or('0')
+      } else {
+        (0x41 + d - 10).to_char().unwrap_or('A')
+      },
+    )
   }
   sb.to_string()
 }

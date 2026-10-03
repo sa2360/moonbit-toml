@@ -65,13 +65,12 @@ fn ParseErrorData::message(self : ParseErrorData) -> String {
       "line \{pos.line}, column \{pos.column}: duplicate key '\{key}'"
     TableConflict(pos, key) =>
       "line \{pos.line}, column \{pos.column}: conflicting table definition for '\{key}'"
-    InvalidSyntax(pos, msg) =>
-      "line \{pos.line}, column \{pos.column}: \{msg}"
+    InvalidSyntax(pos, msg) => "line \{pos.line}, column \{pos.column}: \{msg}"
   }
 }
 
 ///|
-impl Show for ParseError with output(self, logger) {
+impl Show for ParseError with fn output(self, logger) {
   logger.write_object(self.message())
 }
 

@@ -198,11 +198,13 @@ fn escape_unicode(code : Int) -> String {
   sb.write_string("\\u")
   for shift in [12, 8, 4, 0] {
     let d = (code >> shift) & 0xF
-    sb.write_char(if d < 10 {
-      (0x30 + d).to_char().unwrap_or('0')
-    } else {
-      (0x41 + d - 10).to_char().unwrap_or('A')
-    })
+    sb.write_char(
+      if d < 10 {
+        (0x30 + d).to_char().unwrap_or('0')
+      } else {
+        (0x41 + d - 10).to_char().unwrap_or('A')
+      },
+    )
   }
   sb.to_string()
 }

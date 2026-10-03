@@ -26,12 +26,12 @@ fn Scanner::make(input : String) -> Scanner {
   if input.length() > 0 && input.get_char(0) == Some('\u{FEFF}') {
     start = 1
   }
-  { input, pos: start, line: 1, col: start + 1 }
+  { input, pos: start, line: 1, col: start + 1, }
 }
 
 ///|
 fn Scanner::mark(self : Scanner) -> Mark {
-  { pos: self.pos, line: self.line, col: self.col }
+  { pos: self.pos, line: self.line, col: self.col, }
 }
 
 ///|
@@ -71,11 +71,7 @@ fn Scanner::bump(self : Scanner) -> Char {
       return '\u{FFFD}'
     }
   }
-  self.pos += if c.to_int() > 0xFFFF {
-    2
-  } else {
-    1
-  }
+  self.pos += if c.to_int() > 0xFFFF { 2 } else { 1 }
   self.col += 1
   c
 }
@@ -113,7 +109,7 @@ fn Scanner::error_here(self : Scanner, data : ParseErrorData) -> ParseError {
 
 ///|
 fn Scanner::here(self : Scanner) -> Position {
-  { line: self.line, column: self.col }
+  { line: self.line, column: self.col, }
 }
 
 ///|

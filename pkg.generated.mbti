@@ -1,0 +1,108 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbit-toml/toml"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn encode(Table) -> String
+
+pub fn encode_datetime(Datetime) -> String
+
+pub fn encode_value(Value) -> String
+
+pub fn parse(String) -> Table raise ParseError
+
+pub fn parse_value(String) -> Value raise ParseError
+
+// Errors
+pub suberror ParseError {
+  ParseError(ParseErrorData)
+} derive(@debug.Debug)
+pub fn ParseError::message(Self) -> String
+
+// Types and methods
+pub(all) struct DateParts {
+  year : Int
+  month : Int
+  day : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Datetime {
+  date : DateParts?
+  time : TimeParts?
+  offset : Int
+  has_offset : Bool
+} derive(Eq, @debug.Debug)
+pub fn Datetime::kind_name(Self) -> String
+
+pub(all) enum ParseErrorData {
+  UnexpectedChar(Position, Char)
+  UnexpectedEof(Position)
+  UnterminatedString(Position)
+  InvalidEscape(Position, Char)
+  InvalidUnicodeEscape(Position, String)
+  InvalidNumber(Position, String)
+  InvalidDatetime(Position, String)
+  InvalidValue(Position, Char)
+  DuplicateKey(Position, String)
+  TableConflict(Position, String)
+  InvalidSyntax(Position, String)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Position {
+  line : Int
+  column : Int
+} derive(Eq, @debug.Debug)
+
+pub struct Table {
+  // private fields
+}
+pub fn Table::contains(Self, String) -> Bool
+pub fn Table::from_array(Array[(String, Value)]) -> Self
+pub fn Table::get(Self, String) -> Value?
+pub fn Table::get_array(Self, String) -> Array[Value]?
+pub fn Table::get_bool(Self, String) -> Bool?
+pub fn Table::get_datetime(Self, String) -> Datetime?
+pub fn Table::get_double(Self, String) -> Double?
+pub fn Table::get_int(Self, String) -> Int64?
+pub fn Table::get_path(Self, String) -> Value?
+pub fn Table::get_string(Self, String) -> String?
+pub fn Table::get_table(Self, String) -> Self?
+pub fn Table::is_empty(Self) -> Bool
+pub fn Table::keys(Self) -> Iter[String]
+pub fn Table::length(Self) -> Int
+pub fn Table::new() -> Self
+pub fn Table::remove(Self, String) -> Value?
+pub fn Table::set(Self, String, Value) -> Unit
+
+pub(all) struct TimeParts {
+  hour : Int
+  minute : Int
+  second : Int
+  nanos : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) enum Value {
+  Str(String)
+  Int(Int64)
+  Float(Double)
+  Bool(Bool)
+  Datetime(Datetime)
+  Array(Array[Value])
+  Table(Table)
+}
+pub fn Value::as_array(Self) -> Array[Self]?
+pub fn Value::as_bool(Self) -> Bool?
+pub fn Value::as_datetime(Self) -> Datetime?
+pub fn Value::as_double(Self) -> Double?
+pub fn Value::as_int(Self) -> Int64?
+pub fn Value::as_str(Self) -> String?
+pub fn Value::as_table(Self) -> Table?
+pub fn Value::equal(Self, Self) -> Bool
+pub fn Value::type_name(Self) -> String
+
+// Type aliases
+
+// Traits

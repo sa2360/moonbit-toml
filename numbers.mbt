@@ -12,7 +12,12 @@ fn Scanner::parse_number_or_datetime(self : Scanner) -> Value raise ParseError {
   }
   if self.looks_like_time() {
     let time = self.parse_time_value(start, require_seconds=false)
-    return Value::Datetime({ date: None, time: Some(time), offset: 0, has_offset: false })
+    return Value::Datetime({
+      date: None,
+      time: Some(time),
+      offset: 0,
+      has_offset: false,
+    })
   }
   self.parse_number(start)
 }
@@ -64,9 +69,19 @@ fn Scanner::parse_datetime_value(
     let time = self.parse_time_value(start, require_seconds=true)
     if self.at_offset_start() {
       let offset = self.parse_offset_value(start)
-      return Value::Datetime({ date: Some(date), time: Some(time), offset, has_offset: true })
+      return Value::Datetime({
+        date: Some(date),
+        time: Some(time),
+        offset,
+        has_offset: true,
+      })
     }
-    return Value::Datetime({ date: Some(date), time: Some(time), offset: 0, has_offset: false })
+    return Value::Datetime({
+      date: Some(date),
+      time: Some(time),
+      offset: 0,
+      has_offset: false,
+    })
   }
   if delim == Some(' ') || delim == Some('\t') {
     // A space may separate date and time, but only spaces/tabs may
@@ -77,13 +92,28 @@ fn Scanner::parse_datetime_value(
       let time = self.parse_time_value(start, require_seconds=true)
       if self.at_offset_start() {
         let offset = self.parse_offset_value(start)
-        return Value::Datetime({ date: Some(date), time: Some(time), offset, has_offset: true })
+        return Value::Datetime({
+          date: Some(date),
+          time: Some(time),
+          offset,
+          has_offset: true,
+        })
       }
-      return Value::Datetime({ date: Some(date), time: Some(time), offset: 0, has_offset: false })
+      return Value::Datetime({
+        date: Some(date),
+        time: Some(time),
+        offset: 0,
+        has_offset: false,
+      })
     }
     self.reset(m)
   }
-  Value::Datetime({ date: Some(date), time: None, offset: 0, has_offset: false })
+  Value::Datetime({
+    date: Some(date),
+    time: None,
+    offset: 0,
+    has_offset: false,
+  })
 }
 
 ///|
@@ -104,9 +134,11 @@ fn Scanner::parse_date_value(
   ignore(self.bump()) // '-'
   let day = self.read_fixed_digits(2, start)
   if month < 1 || month > 12 || day < 1 || day > 31 {
-    raise self.error_here(InvalidDatetime(self.here(), self.text_since(start.pos)))
+    raise self.error_here(
+      InvalidDatetime(self.here(), self.text_since(start.pos)),
+    )
   }
-  { year, month, day }
+  { year, month, day, }
 }
 
 ///|
@@ -135,7 +167,9 @@ fn Scanner::parse_time_value(
         digits += 1
       }
       if digits == 0 {
-        raise self.error_here(InvalidDatetime(self.here(), self.text_since(start.pos)))
+        raise self.error_here(
+          InvalidDatetime(self.here(), self.text_since(start.pos)),
+        )
       }
       // Pad the stored nanoseconds to 9 digits; precision beyond 1 ns is
       // truncated.
@@ -147,12 +181,16 @@ fn Scanner::parse_time_value(
       nanos = value * scale
     }
   } else if require_seconds {
-    raise self.error_here(InvalidDatetime(self.here(), self.text_since(start.pos)))
+    raise self.error_here(
+      InvalidDatetime(self.here(), self.text_since(start.pos)),
+    )
   }
   if hour > 23 || minute > 59 || second > 60 {
-    raise self.error_here(InvalidDatetime(self.here(), self.text_since(start.pos)))
+    raise self.error_here(
+      InvalidDatetime(self.here(), self.text_since(start.pos)),
+    )
   }
-  { hour, minute, second, nanos }
+  { hour, minute, second, nanos, }
 }
 
 ///|
@@ -163,7 +201,10 @@ fn Scanner::parse_offset_value(
 ) -> Int raise ParseError {
   let c = match self.peek() {
     Some(c) => c
-    None => raise self.error_here(InvalidDatetime(self.here(), self.text_since(start.pos)))
+    None =>
+      raise self.error_here(
+        InvalidDatetime(self.here(), self.text_since(start.pos)),
+      )
   }
   if c == 'Z' || c == 'z' {
     ignore(self.bump())
@@ -173,11 +214,15 @@ fn Scanner::parse_offset_value(
   ignore(self.bump())
   let hour = self.read_fixed_digits(2, start)
   if !self.bump_if(':') {
-    raise self.error_here(InvalidDatetime(self.here(), self.text_since(start.pos)))
+    raise self.error_here(
+      InvalidDatetime(self.here(), self.text_since(start.pos)),
+    )
   }
   let minute = self.read_fixed_digits(2, start)
   if hour > 23 || minute > 59 {
-    raise self.error_here(InvalidDatetime(self.here(), self.text_since(start.pos)))
+    raise self.error_here(
+      InvalidDatetime(self.here(), self.text_since(start.pos)),
+    )
   }
   let minutes = hour * 60 + minute
   if negative {
@@ -189,15 +234,24 @@ fn Scanner::parse_offset_value(
 
 ///|
 /// Reads exactly `n` decimal digits and returns their numeric value.
-fn Scanner::read_fixed_digits(self : Scanner, n : Int, ctx : Mark) -> Int raise ParseError {
+fn Scanner::read_fixed_digits(
+  self : Scanner,
+  n : Int,
+  ctx : Mark,
+) -> Int raise ParseError {
   let mut v = 0
   for _i in 0..<n {
     let c = match self.peek() {
       Some(c) => c
-      None => raise self.error_here(InvalidDatetime(self.here(), self.text_since(ctx.pos)))
+      None =>
+        raise self.error_here(
+          InvalidDatetime(self.here(), self.text_since(ctx.pos)),
+        )
     }
     if !is_digit(c) {
-      raise self.error_here(InvalidDatetime(self.here(), self.text_since(ctx.pos)))
+      raise self.error_here(
+        InvalidDatetime(self.here(), self.text_since(ctx.pos)),
+      )
     }
     v = v * 10 + hex_value(c)
     ignore(self.bump())
@@ -208,7 +262,10 @@ fn Scanner::read_fixed_digits(self : Scanner, n : Int, ctx : Mark) -> Int raise 
 ///|
 /// Parses an integer or float literal (decimal, hex, octal or binary),
 /// including `inf` / `nan`. The position is at the first character.
-fn Scanner::parse_number(self : Scanner, start : Mark) -> Value raise ParseError {
+fn Scanner::parse_number(
+  self : Scanner,
+  start : Mark,
+) -> Value raise ParseError {
   let mut negative = false
   let mut signed = false
   if self.peek() == Some('+') || self.peek() == Some('-') {
@@ -243,7 +300,9 @@ fn Scanner::parse_number(self : Scanner, start : Mark) -> Value raise ParseError
         ignore(self.bump()) // marker
         let digits = self.scan_digit_run(radix=r)
         if digits == "" {
-          raise self.error_here(InvalidNumber(self.here(), self.text_since(start.pos)))
+          raise self.error_here(
+            InvalidNumber(self.here(), self.text_since(start.pos)),
+          )
         }
         return Value::Int(self.accumulate_radix(digits, r, start))
       }
@@ -253,10 +312,14 @@ fn Scanner::parse_number(self : Scanner, start : Mark) -> Value raise ParseError
   // Decimal integer or float.
   let int_part = self.scan_digit_run(radix=10)
   if int_part == "" {
-    raise self.error_here(InvalidNumber(self.here(), self.text_since(start.pos)))
+    raise self.error_here(
+      InvalidNumber(self.here(), self.text_since(start.pos)),
+    )
   }
   if int_part[0] == '0' && int_part.length() > 1 {
-    raise self.error_here(InvalidNumber(self.here(), self.text_since(start.pos)))
+    raise self.error_here(
+      InvalidNumber(self.here(), self.text_since(start.pos)),
+    )
   }
   let mut is_float = false
   let mut frac_part = ""
@@ -267,7 +330,9 @@ fn Scanner::parse_number(self : Scanner, start : Mark) -> Value raise ParseError
     ignore(self.bump())
     frac_part = self.scan_digit_run(radix=10)
     if frac_part == "" {
-      raise self.error_here(InvalidNumber(self.here(), self.text_since(start.pos)))
+      raise self.error_here(
+        InvalidNumber(self.here(), self.text_since(start.pos)),
+      )
     }
   }
   if self.peek() == Some('e') || self.peek() == Some('E') {
@@ -279,7 +344,9 @@ fn Scanner::parse_number(self : Scanner, start : Mark) -> Value raise ParseError
     }
     exp_part = self.scan_digit_run(radix=10)
     if exp_part == "" {
-      raise self.error_here(InvalidNumber(self.here(), self.text_since(start.pos)))
+      raise self.error_here(
+        InvalidNumber(self.here(), self.text_since(start.pos)),
+      )
     }
   }
   if !is_float {
@@ -305,7 +372,7 @@ fn Scanner::parse_number(self : Scanner, start : Mark) -> Value raise ParseError
     sb.write_string(exp_part)
   }
   let text = sb.to_string()
-  let d = try @string.parse_double(text) catch {
+  let d = @string.parse_double(text) catch {
     _ => raise self.error_here(InvalidNumber(self.here(), text))
   }
   Value::Float(d)
@@ -326,7 +393,10 @@ fn is_radix_digit(c : Char, radix : Int) -> Bool {
 /// underscores. Returns the cleaned digit text (underscores removed).
 /// Raises when the run is empty, starts or ends with an underscore,
 /// contains consecutive underscores, or includes a digit out of range.
-fn Scanner::scan_digit_run(self : Scanner, radix~ : Int) -> String raise ParseError {
+fn Scanner::scan_digit_run(
+  self : Scanner,
+  radix~ : Int,
+) -> String raise ParseError {
   let sb = StringBuilder::StringBuilder()
   let mut got_digit = false
   while true {
@@ -340,7 +410,10 @@ fn Scanner::scan_digit_run(self : Scanner, radix~ : Int) -> String raise ParseEr
         } else if c == '_' {
           if !got_digit {
             raise self.error_here(
-              InvalidNumber(self.here(), "underscore may only appear between digits"),
+              InvalidNumber(
+                self.here(),
+                "underscore may only appear between digits",
+              ),
             )
           }
           // An underscore must be followed by another digit.
@@ -350,7 +423,10 @@ fn Scanner::scan_digit_run(self : Scanner, radix~ : Int) -> String raise ParseEr
           }
           if !ok {
             raise self.error_here(
-              InvalidNumber(self.here(), "underscore may only appear between digits"),
+              InvalidNumber(
+                self.here(),
+                "underscore may only appear between digits",
+              ),
             )
           }
           ignore(self.bump())
@@ -362,7 +438,9 @@ fn Scanner::scan_digit_run(self : Scanner, radix~ : Int) -> String raise ParseEr
     }
   }
   if !got_digit {
-    raise self.error_here(InvalidNumber(self.here(), "expected at least one digit"))
+    raise self.error_here(
+      InvalidNumber(self.here(), "expected at least one digit"),
+    )
   }
   sb.to_string()
 }
@@ -386,7 +464,9 @@ fn Scanner::accumulate_decimal(
     let d = hex_value(c).to_uint64()
     // Check before multiplying: mag * 10 + d must not exceed the limit.
     if mag > (limit - d) / 10UL {
-      raise self.error_here(InvalidNumber(self.here(), self.text_since(start.pos)))
+      raise self.error_here(
+        InvalidNumber(self.here(), self.text_since(start.pos)),
+      )
     }
     mag = mag * 10UL + d
   }
@@ -413,7 +493,9 @@ fn Scanner::accumulate_radix(
   for c in digits {
     let d = hex_value(c).to_uint64()
     if mag > (max - d) / r {
-      raise self.error_here(InvalidNumber(self.here(), self.text_since(start.pos)))
+      raise self.error_here(
+        InvalidNumber(self.here(), self.text_since(start.pos)),
+      )
     }
     mag = mag * r + d
   }
