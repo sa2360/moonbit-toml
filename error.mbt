@@ -70,7 +70,7 @@ fn ParseErrorData::message(self : ParseErrorData) -> String {
 }
 
 ///|
-impl Show for ParseError with fn output(self, logger) {
+pub impl Show for ParseError with fn output(self, logger) {
   logger.write_object(self.message())
 }
 

@@ -21,6 +21,7 @@ pub suberror ParseError {
   ParseError(ParseErrorData)
 } derive(@debug.Debug)
 pub fn ParseError::message(Self) -> String
+pub impl Show for ParseError
 
 // Types and methods
 pub(all) struct DateParts {
@@ -101,7 +102,10 @@ pub fn Value::as_int(Self) -> Int64?
 pub fn Value::as_str(Self) -> String?
 pub fn Value::as_table(Self) -> Table?
 pub fn Value::equal(Self, Self) -> Bool
+pub fn Value::to_json(Self) -> Json
+pub fn Value::to_json_string(Self) -> String
 pub fn Value::type_name(Self) -> String
+pub impl ToJson for Value
 
 // Type aliases
 

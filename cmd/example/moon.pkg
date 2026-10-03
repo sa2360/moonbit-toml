@@ -1,0 +1,5 @@
+import {
+  "sa2360/toml",
+}
+
+pkgtype(kind: "executable")

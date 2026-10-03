@@ -41,6 +41,20 @@ let inline = @toml.encode_value(v)  // a single value in inline form
 `encode` writes sub-tables as `[a.b]` sections and arrays of tables as
 `[[a.b]]`, preserving first-definition key order. The output round-trips.
 
+### JSON interop
+
+```moonbit
+let json = value.to_json()          // -> moonbitlang/core Json
+let text = value.to_json_string()   // compact JSON string
+```
+
+Integers keep full 64-bit precision through their textual representation,
+datetimes become strings in canonical TOML notation, and `inf` / `-inf` /
+`nan` become the strings `"inf"` / `"-inf"` / `"nan"` (JSON has no
+representation for them). `Value` implements the standard `ToJson` trait.
+
+A runnable demo lives in `cmd/example`: `moon run cmd/example`.
+
 ### Value model
 
 ```moonbit
@@ -70,10 +84,14 @@ positioned error message on invalid input.
 ## Testing
 
 ```bash
-moon test                        # 299 tests: unit + full embedded toml-test suite
+moon test                        # 303 tests: unit + full embedded toml-test suite
+moon bench                       # parse / encode / to_json benchmarks
 moon build --target native cmd/toml2json
 python scripts/run_toml_test.py  # official protocol runner over the CLI (281 cases)
 ```
+
+On a 2026 laptop (wasm backend), parsing a ~1400-line / 200-section
+synthetic document takes about 1.8 ms, re-encoding it about 0.5 ms.
 
 The conformance cases are generated from the vendored suite in
 `toml-test-tests/` ([Apache-2.0](./toml-test-tests/COPYING)) by
@@ -90,7 +108,9 @@ strings.mbt          the four string kinds and escape validation
 numbers.mbt          integers, floats, datetimes (with range checks)
 parser.mbt           document/table/keyval/array/inline-table + definition rules
 encode.mbt           serializer (documents and inline values)
+json.mbt             JSON interop (to_json, ToJson impl)
 cmd/toml2json/       native CLI emitting toml-test tagged JSON
+cmd/example/         runnable demo: parse, read, re-encode, convert to JSON
 scripts/             conformance generator + CLI runner
 toml-test-tests/     vendored official suite (v1.0.0)
 ```
@@ -123,6 +143,7 @@ doc.get_string("title")     // Some("Example")
 doc.get_path("owner.name")  // Some(Str("Tom"))
 
 let text = @toml.encode(doc) // 序列化回 TOML 文档
+let json = @toml.Value::Table(doc).to_json_string() // 转 JSON(整数精度无损)
 ```
 
 错误处理采用 MoonBit 惯用的 raise 风格:
@@ -133,10 +154,13 @@ let doc = @toml.parse(input) catch {
 }
 ```
 
+可运行的示例在 `cmd/example`:`moon run cmd/example`。
+
 ### 测试
 
 ```bash
-moon test                        # 299 个测试:单元测试 + 内嵌 toml-test 全量套件
+moon test                        # 303 个测试:单元测试 + 内嵌 toml-test 全量套件
+moon bench                       # parse / encode / to_json 基准
 moon build --target native cmd/toml2json
 python scripts/run_toml_test.py  # 官方协议 runner(281 个用例,含字节级 UTF-8 用例)
 ```
