@@ -2,6 +2,12 @@
 
 A [TOML v1.0.0](https://toml.io/en/v1.0.0) parser and serializer for [MoonBit](https://www.moonbitlang.com), with **full compliance** against the official [toml-test](https://github.com/toml-lang/toml-test) v1.0.0 suite.
 
+Published on mooncakes.io as [`sa2360/toml`](https://mooncakes.io/docs/#/sa2360/toml/).
+
+```bash
+moon add sa2360/toml
+```
+
 ## Highlights
 
 - **100% toml-test v1.0.0 compliance** — all 96 valid and 185 invalid cases of the official suite pass. The suite is embedded in the repo: `moon test` alone runs all 275 conformance cases plus unit tests.
@@ -124,7 +130,7 @@ Apache-2.0, Copyright the toml-test authors.
 
 ## moonbit-toml(中文说明)
 
-面向 [MoonBit](https://www.moonbitlang.com) 的 [TOML v1.0.0](https://toml.io/en/v1.0.0) 解析与序列化库,通过官方 [toml-test](https://github.com/toml-lang/toml-test) v1.0.0 全量合规测试(96 个 valid + 185 个 invalid 用例,100%)。
+面向 [MoonBit](https://www.moonbitlang.com) 的 [TOML v1.0.0](https://toml.io/en/v1.0.0) 解析与序列化库,通过官方 [toml-test](https://github.com/toml-lang/toml-test) v1.0.0 全量合规测试(96 个 valid + 185 个 invalid 用例,100%)。已发布到 [mooncakes.io](https://mooncakes.io/docs/#/sa2360/toml/):`moon add sa2360/toml`。
 
 ### 特性
 
