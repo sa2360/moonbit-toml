@@ -293,7 +293,7 @@ fn Scanner::parse_unicode_escape(
   digits : Int,
 ) -> Char raise ParseError {
   let start = self.pos
-  let mut value = 0
+  let mut value : Int64 = 0L
   for _i in 0..<digits {
     let c = match self.peek() {
       Some(c) => c
@@ -307,12 +307,15 @@ fn Scanner::parse_unicode_escape(
         InvalidUnicodeEscape(self.here(), self.text_since(start)),
       )
     }
-    value = value * 16 + hex_value(c)
+    value = value * 16L + Int64::from_int(hex_value(c))
+    if value > 0x10FFFFL {
+      raise self.error_here(InvalidUnicodeEscape(self.here(), self.text_since(start)))
+    }
     ignore(self.bump())
   }
-  // Surrogates and values beyond the Unicode range are not scalar values.
-  if (value >= 0xD800 && value <= 0xDFFF) || value > 0x10FFFF {
+  // Surrogates are not Unicode scalar values.
+  if value >= 0xD800L && value <= 0xDFFFL {
     raise self.error_here(InvalidUnicodeEscape(self.here(), self.text_since(start)))
   }
-  value.to_char().unwrap_or('\u{FFFD}')
+  value.to_int().to_char().unwrap_or('\u{FFFD}')
 }

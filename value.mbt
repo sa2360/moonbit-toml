@@ -215,7 +215,7 @@ pub fn Value::equal(self : Value, other : Value) -> Bool {
         let mut i = 0
         let len = a.length()
         while i < len {
-          if a[i].equal(b[i]) {
+          if !a[i].equal(b[i]) {
             return false
           }
           i += 1

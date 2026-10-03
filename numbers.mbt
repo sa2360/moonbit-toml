@@ -11,7 +11,7 @@ fn Scanner::parse_number_or_datetime(self : Scanner) -> Value raise ParseError {
     return self.parse_datetime_value(start)
   }
   if self.looks_like_time() {
-    let time = self.parse_time_value(start)
+    let time = self.parse_time_value(start, require_seconds=false)
     return Value::Datetime({ date: None, time: Some(time), offset: 0, has_offset: false })
   }
   self.parse_number(start)
@@ -59,7 +59,9 @@ fn Scanner::parse_datetime_value(
   let delim = self.peek()
   if delim == Some('T') || delim == Some('t') {
     ignore(self.bump())
-    let time = self.parse_time_value(start)
+    // Seconds are required in date-times (they may only be omitted in
+    // time-only values).
+    let time = self.parse_time_value(start, require_seconds=true)
     if self.at_offset_start() {
       let offset = self.parse_offset_value(start)
       return Value::Datetime({ date: Some(date), time: Some(time), offset, has_offset: true })
@@ -72,7 +74,7 @@ fn Scanner::parse_datetime_value(
     let m = self.mark()
     self.skip_inline_ws()
     if self.looks_like_time() {
-      let time = self.parse_time_value(start)
+      let time = self.parse_time_value(start, require_seconds=true)
       if self.at_offset_start() {
         let offset = self.parse_offset_value(start)
         return Value::Datetime({ date: Some(date), time: Some(time), offset, has_offset: true })
@@ -109,9 +111,11 @@ fn Scanner::parse_date_value(
 
 ///|
 /// Parses `partial-time`; the position is at the two-digit hour.
+/// Seconds may be omitted only in time-only values (`require_seconds=false`).
 fn Scanner::parse_time_value(
   self : Scanner,
   start : Mark,
+  require_seconds~ : Bool,
 ) -> TimeParts raise ParseError {
   let hour = self.read_fixed_digits(2, start)
   ignore(self.bump()) // ':'
@@ -142,6 +146,8 @@ fn Scanner::parse_time_value(
       }
       nanos = value * scale
     }
+  } else if require_seconds {
+    raise self.error_here(InvalidDatetime(self.here(), self.text_since(start.pos)))
   }
   if hour > 23 || minute > 59 || second > 60 {
     raise self.error_here(InvalidDatetime(self.here(), self.text_since(start.pos)))
@@ -222,20 +228,20 @@ fn Scanner::parse_number(self : Scanner, start : Mark) -> Value raise ParseError
     }
     raise self.error_here(InvalidValue(self.here(), 'n'))
   }
-  // Radix integers: unsigned, only without a sign.
+  // Radix integers: unsigned, only without a sign, lowercase marker only.
   if !signed && self.peek() == Some('0') {
     let second = self.peek_at(1)
     let radix = match second {
-      Some('x') | Some('X') => Some(16)
-      Some('o') | Some('O') => Some(8)
-      Some('b') | Some('B') => Some(2)
+      Some('x') => Some(16)
+      Some('o') => Some(8)
+      Some('b') => Some(2)
       _ => None
     }
     match radix {
       Some(r) => {
         ignore(self.bump()) // '0'
         ignore(self.bump()) // marker
-        let digits = self.scan_digit_run(hex=true)
+        let digits = self.scan_digit_run(radix=r)
         if digits == "" {
           raise self.error_here(InvalidNumber(self.here(), self.text_since(start.pos)))
         }
@@ -245,7 +251,7 @@ fn Scanner::parse_number(self : Scanner, start : Mark) -> Value raise ParseError
     }
   }
   // Decimal integer or float.
-  let int_part = self.scan_digit_run(hex=false)
+  let int_part = self.scan_digit_run(radix=10)
   if int_part == "" {
     raise self.error_here(InvalidNumber(self.here(), self.text_since(start.pos)))
   }
@@ -259,7 +265,7 @@ fn Scanner::parse_number(self : Scanner, start : Mark) -> Value raise ParseError
   if self.peek() == Some('.') {
     is_float = true
     ignore(self.bump())
-    frac_part = self.scan_digit_run(hex=false)
+    frac_part = self.scan_digit_run(radix=10)
     if frac_part == "" {
       raise self.error_here(InvalidNumber(self.here(), self.text_since(start.pos)))
     }
@@ -271,7 +277,7 @@ fn Scanner::parse_number(self : Scanner, start : Mark) -> Value raise ParseError
       exp_negative = self.peek() == Some('-')
       ignore(self.bump())
     }
-    exp_part = self.scan_digit_run(hex=false)
+    exp_part = self.scan_digit_run(radix=10)
     if exp_part == "" {
       raise self.error_here(InvalidNumber(self.here(), self.text_since(start.pos)))
     }
@@ -306,17 +312,28 @@ fn Scanner::parse_number(self : Scanner, start : Mark) -> Value raise ParseError
 }
 
 ///|
-/// Scans a run of (hex) digits separated by single underscores. Returns the
-/// cleaned digit text (underscores removed). Raises when the run is empty,
-/// starts or ends with an underscore, or contains consecutive underscores.
-fn Scanner::scan_digit_run(self : Scanner, hex~ : Bool) -> String raise ParseError {
+/// True if `c` is a valid digit in `radix` (16 allows hex letters).
+fn is_radix_digit(c : Char, radix : Int) -> Bool {
+  if radix == 16 {
+    is_hex_digit(c)
+  } else {
+    is_digit(c) && hex_value(c) < radix
+  }
+}
+
+///|
+/// Scans a run of digits (in the given radix) separated by single
+/// underscores. Returns the cleaned digit text (underscores removed).
+/// Raises when the run is empty, starts or ends with an underscore,
+/// contains consecutive underscores, or includes a digit out of range.
+fn Scanner::scan_digit_run(self : Scanner, radix~ : Int) -> String raise ParseError {
   let sb = StringBuilder::StringBuilder()
   let mut got_digit = false
   while true {
     let c = self.peek()
     match c {
       Some(c) =>
-        if (if hex { is_hex_digit(c) } else { is_digit(c) }) {
+        if is_radix_digit(c, radix) {
           ignore(self.bump())
           sb.write_char(c)
           got_digit = true
@@ -327,13 +344,8 @@ fn Scanner::scan_digit_run(self : Scanner, hex~ : Bool) -> String raise ParseErr
             )
           }
           // An underscore must be followed by another digit.
-          let next = self.peek_at(1)
-          let ok = match next {
-            Some(n) => if hex {
-              is_hex_digit(n)
-            } else {
-              is_digit(n)
-            }
+          let ok = match self.peek_at(1) {
+            Some(n) => is_radix_digit(n, radix)
             None => false
           }
           if !ok {
