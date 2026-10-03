@@ -267,7 +267,8 @@ def main():
     runner.append("")
     runner.append("///|")
     runner.append("// Checks one generated valid case: parse and compare structurally")
-    runner.append("// against the expected value derived from toml-test's tagged JSON.")
+    runner.append("// against the expected value derived from toml-test's tagged JSON,")
+    runner.append("// then re-encode and re-parse to verify the round trip.")
     runner.append("fn check_valid_case(i : Int) -> Unit raise {")
     runner.append("  let (name, src, expected) = valid_cases[i]")
     runner.append("  let doc = parse(src) catch {")
@@ -277,6 +278,19 @@ def main():
     runner.append("  if !got.equal(expected) {")
     runner.append(
         '    fail("toml-test valid case \'\\{name}\' mismatch\\n  got:      \\{encode_value(got)}\\n  expected: \\{encode_value(expected)}")'
+    )
+    runner.append("  }")
+    runner.append("  // Round trip: encode the parsed document, parse it again and")
+    runner.append("  // require an equal result.")
+    runner.append("  let encoded = encode(doc)")
+    runner.append("  let reparsed : Value = Value::Table(parse(encoded) catch {")
+    runner.append(
+        '    err => fail("toml-test valid case \'\\{name}\' failed to round trip: \\{err.message()}\\n  encoded: \\{encoded}")'
+    )
+    runner.append("  })")
+    runner.append("  if !reparsed.equal(got) {")
+    runner.append(
+        '    fail("toml-test valid case \'\\{name}\' round trip mismatch\\n  encoded: \\{encoded}\\n  got:      \\{encode_value(got)}\\n  reparsed: \\{encode_value(reparsed)}")'
     )
     runner.append("  }")
     runner.append("}")
