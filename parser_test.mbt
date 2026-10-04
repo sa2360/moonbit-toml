@@ -298,3 +298,22 @@ test "value fragments via parse_value" {
   @debug.assert_eq(parse_value("[1, 2]").as_array().unwrap().length(), 2)
   @debug.assert_eq(parse_value("1979-05-27T07:32:00Z").type_name(), "datetime")
 }
+
+///|
+test "nesting depth limit" {
+  // Within the limit: parses fine.
+  let ok_depth = 100
+  parse_ok(
+    "a = " + String::make(ok_depth, '[') + "1" + String::make(ok_depth, ']'),
+  )
+  // Beyond the limit: a positioned error, not a crash.
+  let bad = "a = " + String::make(201, '[') + String::make(201, ']')
+  let msg = try parse(bad) catch {
+    err => err.message()
+  } noraise {
+    _ => fail("expected depth limit error")
+  }
+  @debug.assert_eq(msg.contains("nesting depth"), true)
+  // Inline tables count too.
+  must_fail("a = " + String::make(201, '{') + " b = 1" + String::make(201, '}'))
+}

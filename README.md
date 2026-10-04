@@ -52,12 +52,19 @@ let inline = @toml.encode_value(v)  // a single value in inline form
 ```moonbit
 let json = value.to_json()          // -> moonbitlang/core Json
 let text = value.to_json_string()   // compact JSON string
+let back = @toml.Value::from_json(json)  // JSON -> TOML (raises on null)
 ```
 
-Integers keep full 64-bit precision through their textual representation,
-datetimes become strings in canonical TOML notation, and `inf` / `-inf` /
-`nan` become the strings `"inf"` / `"-inf"` / `"nan"` (JSON has no
-representation for them). `Value` implements the standard `ToJson` trait.
+`to_json`: integers keep full 64-bit precision through their textual
+representation, datetimes become strings in canonical TOML notation, and
+`inf` / `-inf` / `nan` become the strings `"inf"` / `"-inf"` / `"nan"`
+(JSON has no representation for them). `Value` implements the standard
+`ToJson`, `Eq` and `Debug` traits.
+
+`from_json` conventions: JSON `null` raises `FromJsonError::JsonNull`;
+integral numbers within 64-bit range become integers (so JSON `2.0`
+reads back as the integer `2` — JSON cannot distinguish them); JSON
+strings never become datetimes.
 
 A runnable demo lives in `cmd/example`: `moon run cmd/example`.
 
@@ -90,12 +97,16 @@ positioned error message on invalid input.
 ## Testing
 
 ```bash
-moon test                        # 310 tests: unit + embedded toml-test suite + doc examples
+moon test                        # 316 tests: unit + embedded toml-test suite + doc examples
 moon test --target native        # same suite on the native backend
 moon bench                       # parse / encode / to_json benchmarks (+ core JSON reference)
 moon build --target native cmd/toml2json
 python scripts/run_toml_test.py  # official protocol runner over the CLI (281 cases)
 ```
+
+Nesting of arrays and inline tables is bounded at 200 levels
+(`MAX_NESTING_DEPTH`): hostile inputs fail with a positioned error
+instead of exhausting the stack.
 
 On a 2026 laptop (wasm backend), parsing a ~1400-line / 200-section
 synthetic document takes about 1.8 ms, re-encoding it about 0.5 ms. The
@@ -173,12 +184,14 @@ let doc = @toml.parse(input) catch {
 ### 测试
 
 ```bash
-moon test                        # 310 个测试:单元测试 + 内嵌 toml-test 全量套件 + 文档示例
+moon test                        # 316 个测试:单元测试 + 内嵌 toml-test 全量套件 + 文档示例
 moon test --target native        # 同一套件在 native 后端
 moon bench                       # parse / encode / to_json 基准(含 core JSON 参照)
 moon build --target native cmd/toml2json
 python scripts/run_toml_test.py  # 官方协议 runner(281 个用例,含字节级 UTF-8 用例)
 ```
+
+数组与内联表的嵌套深度上限为 200 层(`MAX_NESTING_DEPTH`),恶意输入会得到带行列号的报错而不是栈溢出崩溃。
 
 性能参考(wasm 后端,约 1400 行 / 200 节合成文档):parse 约 1.8ms,encode 约 0.5ms;同一文档 core 的 JSON 解析器约 0.5ms——JSON 语法简单得多且核心库深度优化,这是如实的参照点,配置文件体量下差异可忽略。
 

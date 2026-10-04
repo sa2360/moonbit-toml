@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub const MAX_NESTING_DEPTH : Int = 200
+
 pub fn encode(Table) -> String
 
 pub fn encode_datetime(Datetime) -> String

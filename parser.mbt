@@ -204,6 +204,14 @@ fn Scanner::parse_value(self : Scanner) -> Value raise ParseError {
 
 ///|
 fn Scanner::parse_array(self : Scanner) -> Value raise ParseError {
+  self.enter_nesting()
+  let v = self.parse_array_body()
+  self.leave_nesting()
+  v
+}
+
+///|
+fn Scanner::parse_array_body(self : Scanner) -> Value raise ParseError {
   ignore(self.bump()) // '['
   let items : Array[Value] = []
   while true {
@@ -236,6 +244,14 @@ fn Scanner::parse_array(self : Scanner) -> Value raise ParseError {
 
 ///|
 fn Scanner::parse_inline_table(self : Scanner) -> Value raise ParseError {
+  self.enter_nesting()
+  let v = self.parse_inline_table_body()
+  self.leave_nesting()
+  v
+}
+
+///|
+fn Scanner::parse_inline_table_body(self : Scanner) -> Value raise ParseError {
   ignore(self.bump()) // '{'
   let table = Table::make(Inline)
   self.skip_inline_ws()

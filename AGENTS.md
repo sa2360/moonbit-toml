@@ -57,6 +57,9 @@ moon publish                        # publish to mooncakes.io (bump version in m
 - Datetime policy: seconds are required in date-times, optional in
   time-only values; sub-second precision is truncated to nanoseconds;
   multi-line strings normalize CRLF to LF.
+- Nesting depth: arrays and inline tables are bounded at
+  `MAX_NESTING_DEPTH` (200). Any new recursive construct added to the
+  parser must go through `enter_nesting`/`leave_nesting` as well.
 
 ## Measured dead ends
 

@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: MIT
 
 ///|
+/// Maximum nesting depth of arrays and inline tables. Bounds parser
+/// recursion so hostile inputs fail with a positioned error instead of
+/// exhausting the stack.
+pub const MAX_NESTING_DEPTH : Int = 200
+
+///|
 /// Character scanner over the input with line/column tracking.
 /// `pos` is a UTF-16 code unit offset into `input`.
 priv struct Scanner {
@@ -10,6 +16,7 @@ priv struct Scanner {
   mut pos : Int
   mut line : Int
   mut col : Int
+  mut depth : Int
 }
 
 ///|
@@ -26,7 +33,28 @@ fn Scanner::make(input : String) -> Scanner {
   if input.length() > 0 && input.get_char(0) == Some('\u{FEFF}') {
     start = 1
   }
-  { input, pos: start, line: 1, col: start + 1, }
+  { input, pos: start, line: 1, col: start + 1, depth: 0, }
+}
+
+///|
+/// Enters a nested array / inline table, raising when the nesting limit is
+/// exceeded. Must be paired with `leave` on every exit path.
+fn Scanner::enter_nesting(self : Scanner) -> Unit raise ParseError {
+  self.depth += 1
+  if self.depth > MAX_NESTING_DEPTH {
+    self.depth -= 1
+    raise self.error_here(
+      InvalidSyntax(
+        self.here(),
+        "exceeded maximum nesting depth (\{MAX_NESTING_DEPTH})",
+      ),
+    )
+  }
+}
+
+///|
+fn Scanner::leave_nesting(self : Scanner) -> Unit {
+  self.depth -= 1
 }
 
 ///|
