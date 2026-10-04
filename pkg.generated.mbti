@@ -17,6 +17,10 @@ pub fn parse(String) -> Table raise ParseError
 pub fn parse_value(String) -> Value raise ParseError
 
 // Errors
+pub suberror FromJsonError {
+  JsonNull
+} derive(Eq, @debug.Debug)
+
 pub suberror ParseError {
   ParseError(ParseErrorData)
 } derive(@debug.Debug)
@@ -102,6 +106,7 @@ pub fn Value::as_int(Self) -> Int64?
 pub fn Value::as_str(Self) -> String?
 pub fn Value::as_table(Self) -> Table?
 pub fn Value::equal(Self, Self) -> Bool
+pub fn Value::from_json(Json) -> Self raise FromJsonError
 pub fn Value::to_json(Self) -> Json
 pub fn Value::to_json_string(Self) -> String
 pub fn Value::type_name(Self) -> String

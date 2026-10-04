@@ -71,3 +71,73 @@ pub impl ToJson for Value with fn to_json(self) {
 pub fn Value::to_json_string(self : Value) -> String {
   @json.to_json(self).stringify()
 }
+
+///|
+/// Error raised by `Value::from_json` for JSON values that have no TOML
+/// representation.
+pub suberror FromJsonError {
+  /// JSON `null` does not exist in TOML.
+  JsonNull
+} derive(Eq, Debug)
+
+///|
+/// Converts a core `Json` value into a TOML `Value`.
+///
+/// Conventions:
+/// - JSON `null` raises `FromJsonError::JsonNull` (TOML has no null);
+/// - numbers that are integral and fit in 64 bits become TOML integers,
+///   everything else stays a float (so JSON `1.0` becomes the integer
+///   `1`, and values beyond the double range fall back to `inf`-style
+///   floats);
+/// - JSON strings never become datetimes — a string that looks like an
+///   RFC 3339 date stays a string;
+/// - objects become tables, arrays become arrays.
+///
+/// # Example
+///
+/// ```mbt check
+/// test {
+///   let v = @toml.Value::from_json(@json.parse("{\"a\": [1, true]}")) catch {
+///     _ => abort("unreachable")
+///   }
+///   @test.assert_eq(@toml.encode_value(v), "{a = [1, true]}")
+/// }
+/// ```
+pub fn Value::from_json(j : Json) -> Value raise FromJsonError {
+  match j {
+    Null => raise JsonNull
+    True => Bool(true)
+    False => Bool(false)
+    Number(d, repr~) =>
+      match repr {
+        // The textual representation is authoritative when present.
+        Some(text) =>
+          Value::Int(@string.parse_int64(text)) catch {
+            _ => Value::Float(d)
+          }
+        None =>
+          if d == d.trunc() &&
+            d >= -9223372036854775808.0 &&
+            d < 9223372036854775808.0 {
+            Value::Int(d.to_int64())
+          } else {
+            Value::Float(d)
+          }
+      }
+    String(s) => Str(s)
+    Array(items) => {
+      let arr : Array[Value] = []
+      for item in items {
+        arr.push(Value::from_json(item))
+      }
+      Array(arr)
+    }
+    Object(entries) => {
+      let t = Table::new()
+      for k, v in entries {
+        t.set(k, Value::from_json(v))
+      }
+      Table(t)
+    }
+  }
+}

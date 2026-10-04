@@ -84,3 +84,53 @@ test "to_json via ToJson trait" {
   let j = @json.to_json(Value::Array([Value::Int(1L), Value::Str("x")]))
   @debug.assert_eq(j.stringify(), "[1,\"x\"]")
 }
+
+///|
+test "from_json primitives and conventions" {
+  @debug.assert_eq(Value::from_json(@json.parse("42")).as_int(), Some(42L))
+  // Integral doubles become integers.
+  @debug.assert_eq(Value::from_json(@json.parse("1.0")).as_int(), Some(1L))
+  @debug.assert_eq(Value::from_json(@json.parse("-3.0")).as_int(), Some(-3L))
+  @debug.assert_eq(Value::from_json(@json.parse("2.5")).as_double(), Some(2.5))
+  @debug.assert_eq(Value::from_json(@json.parse("true")).as_bool(), Some(true))
+  @debug.assert_eq(Value::from_json(@json.parse("\"hi\"")).as_str(), Some("hi"))
+  // Non-finite doubles are representable in TOML.
+  @debug.assert_eq(
+    Value::from_json(@json.parse("1e400")).as_double(),
+    Some(1.0 / 0.0),
+  )
+}
+
+///|
+test "from_json rejects null" {
+  let j = @json.parse("null")
+  try Value::from_json(j) catch {
+    JsonNull => return
+  } noraise {
+    _ => fail("expected JsonNull")
+  }
+}
+
+///|
+test "from_json nested structures" {
+  let v = Value::from_json(
+    @json.parse("{\"server\": {\"port\": 8080, \"tags\": [\"a\"]}}"),
+  ) catch {
+    _ => fail("unexpected error")
+  }
+  let t = v.as_table().unwrap()
+  @debug.assert_eq(t.get_path("server.port"), Some(Value::Int(8080L)))
+  @debug.assert_eq(t.get_path("server.tags.0"), None) // paths do not index arrays
+  @debug.assert_eq(encode_value(v), "{server = {port = 8080, tags = [\"a\"]}}")
+}
+
+///|
+test "json to toml to json round trip (json-safe document)" {
+  // JSON cannot distinguish 2 from 2.0, so by convention integral JSON
+  // numbers become integers; use non-integral floats here.
+  let doc = must_parse("a = 1\nb = \"x\"\nc = [1.5, true]\n[t]\nd = 2.25")
+  let circle = Value::from_json(@json.parse(Value::Table(doc).to_json_string())) catch {
+    _ => fail("unexpected error")
+  }
+  @debug.assert_eq(circle.equal(Value::Table(doc)), true)
+}

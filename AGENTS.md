@@ -58,6 +58,15 @@ moon publish                        # publish to mooncakes.io (bump version in m
   time-only values; sub-second precision is truncated to nanoseconds;
   multi-line strings normalize CRLF to LF.
 
+## Measured dead ends
+
+- Rewriting the scanner to snapshot the input into an `Array[Char]`
+  (avoiding per-call UTF-16 decoding in `String::get_char`) was benchmarked
+  at ~1.79 ms vs ~1.74 ms for the baseline on the 200-section bench doc —
+  no gain; the snapshot allocation cancels out the cheaper reads. The
+  parser's cost sits elsewhere (StringBuilder traffic, number/datetime
+  conversion, map operations). Don't repeat this refactor expecting wins.
+
 ## Commit style
 
 Small, milestone-scoped commits with descriptive messages; the hackathon
