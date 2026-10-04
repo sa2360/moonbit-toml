@@ -12,6 +12,18 @@
 /// - JSON has no representation for non-finite floats, so `inf`, `-inf`
 ///   and `nan` become the strings `"inf"`, `"-inf"` and `"nan"`;
 /// - tables become JSON objects, arrays become JSON arrays.
+///
+/// # Example
+///
+/// ```mbt check
+/// test {
+///   let doc = @toml.parse("port = 8080\nactive = true")
+///   @test.assert_eq(
+///     @toml.Value::Table(doc).to_json_string(),
+///     "{\"port\":8080,\"active\":true}",
+///   )
+/// }
+/// ```
 pub fn Value::to_json(self : Value) -> Json {
   match self {
     Str(s) => Json::string(s)

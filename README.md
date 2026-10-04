@@ -90,14 +90,19 @@ positioned error message on invalid input.
 ## Testing
 
 ```bash
-moon test                        # 303 tests: unit + full embedded toml-test suite
-moon bench                       # parse / encode / to_json benchmarks
+moon test                        # 310 tests: unit + embedded toml-test suite + doc examples
+moon test --target native        # same suite on the native backend
+moon bench                       # parse / encode / to_json benchmarks (+ core JSON reference)
 moon build --target native cmd/toml2json
 python scripts/run_toml_test.py  # official protocol runner over the CLI (281 cases)
 ```
 
 On a 2026 laptop (wasm backend), parsing a ~1400-line / 200-section
-synthetic document takes about 1.8 ms, re-encoding it about 0.5 ms.
+synthetic document takes about 1.8 ms, re-encoding it about 0.5 ms. The
+same document parsed by moonbitlang/core's JSON parser takes ~0.5 ms —
+JSON is a much simpler grammar (and the core parser is heavily
+optimized), which is the honest reference point; for configuration-sized
+inputs the difference is negligible.
 
 The conformance cases are generated from the vendored suite in
 `toml-test-tests/` ([Apache-2.0](./toml-test-tests/COPYING)) by
@@ -160,16 +165,22 @@ let doc = @toml.parse(input) catch {
 }
 ```
 
+- **可解释的 API 文档**:核心函数带有由 `moon check`/`moon test` 校验的文档示例(```mbt check),mooncakes 文档页直接渲染;
+- `Value` 实现了标准 `Eq` / `Debug` trait(表序无关、NaN 相等、Z 等价 +00:00),可直接用于 `@debug.assert_eq`;
+
 可运行的示例在 `cmd/example`:`moon run cmd/example`。
 
 ### 测试
 
 ```bash
-moon test                        # 303 个测试:单元测试 + 内嵌 toml-test 全量套件
-moon bench                       # parse / encode / to_json 基准
+moon test                        # 310 个测试:单元测试 + 内嵌 toml-test 全量套件 + 文档示例
+moon test --target native        # 同一套件在 native 后端
+moon bench                       # parse / encode / to_json 基准(含 core JSON 参照)
 moon build --target native cmd/toml2json
 python scripts/run_toml_test.py  # 官方协议 runner(281 个用例,含字节级 UTF-8 用例)
 ```
+
+性能参考(wasm 后端,约 1400 行 / 200 节合成文档):parse 约 1.8ms,encode 约 0.5ms;同一文档 core 的 JSON 解析器约 0.5ms——JSON 语法简单得多且核心库深度优化,这是如实的参照点,配置文件体量下差异可忽略。
 
 ### 已知取舍
 

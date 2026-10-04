@@ -8,10 +8,29 @@
 /// written inline. Key order follows first-definition order (scalars before
 /// nested tables), and the output round-trips: parsing it again yields an
 /// equal `Table`.
+///
+/// # Example
+///
+/// ```mbt check
+/// test {
+///   let doc = @toml.parse("[server]\nhost = \"localhost\"\nport = 80")
+///   @test.assert_eq(
+///     @toml.encode(doc),
+///     "[server]\nhost = \"localhost\"\nport = 80\n",
+///   )
+/// }
+/// ```
 pub fn encode(table : Table) -> String {
   let sb = StringBuilder::StringBuilder()
   encode_table_into(sb, table, [])
-  sb.to_string()
+  let s = sb.to_string()
+  // Section headers always carry a leading newline for separation; a
+  // document that starts with a table should not begin with a blank line.
+  if s.has_prefix("\n") {
+    s[1:].to_owned()
+  } else {
+    s
+  }
 }
 
 ///|

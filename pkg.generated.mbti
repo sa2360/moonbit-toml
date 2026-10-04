@@ -105,7 +105,9 @@ pub fn Value::equal(Self, Self) -> Bool
 pub fn Value::to_json(Self) -> Json
 pub fn Value::to_json_string(Self) -> String
 pub fn Value::type_name(Self) -> String
+pub impl Eq for Value
 pub impl ToJson for Value
+pub impl @debug.Debug for Value
 
 // Type aliases
 

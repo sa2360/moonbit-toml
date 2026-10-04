@@ -30,6 +30,9 @@ jobs:
       - name: Unit tests + embedded toml-test conformance
         run: moon test
 
+      - name: Tests on native backend
+        run: moon test --target native
+
       - name: Build toml2json CLI (native)
         run: moon build --target native cmd/toml2json
 

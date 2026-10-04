@@ -14,6 +14,18 @@ priv struct Parser {
 ///
 /// Raises `ParseError` when the input is not a valid TOML v1.0.0 document;
 /// the error carries the 1-based line/column of the problem.
+///
+/// # Example
+///
+/// ```mbt check
+/// test {
+///   let doc = @toml.parse(
+///     "title = \"demo\"\n[server]\nhost = \"127.0.0.1\"\nport = 8080",
+///   )
+///   @test.assert_eq(doc.get_string("title"), Some("demo"))
+///   @test.assert_eq(doc.get_path("server.port"), Some(@toml.Value::Int(8080L)))
+/// }
+/// ```
 pub fn parse(input : String) -> Table raise ParseError {
   let sc = Scanner::make(input)
   let root = Table::make(Explicit)
@@ -25,6 +37,15 @@ pub fn parse(input : String) -> Table raise ParseError {
 ///|
 /// Parses a single TOML value fragment such as `"1_000"`, `"[1, 2]"` or
 /// `"1979-05-27T07:32:00Z"`. Useful for decoding individual settings.
+///
+/// # Example
+///
+/// ```mbt check
+/// test {
+///   @test.assert_eq(@toml.parse_value("1_000").as_int(), Some(1000L))
+///   @test.assert_eq(@toml.parse_value("1979-05-27").type_name(), "date-local")
+/// }
+/// ```
 pub fn parse_value(input : String) -> Value raise ParseError {
   let sc = Scanner::make(input)
   sc.skip_ws_newlines_comments()

@@ -227,6 +227,44 @@ pub fn Value::equal(self : Value, other : Value) -> Bool {
 }
 
 ///|
+/// Implements the standard `Eq` trait using `Value::equal` semantics
+/// (order-insensitive tables, NaN equals NaN, offset-equivalent datetimes).
+pub impl Eq for Value with fn equal(self, other) {
+  self.equal(other)
+}
+
+///|
+/// Implements the standard `Debug` trait with a structural representation,
+/// so TOML values can be used in `@debug.assert_eq` diffs.
+pub impl Debug for Value with fn to_repr(self) {
+  match self {
+    Str(s) => Repr::opaque_("Str", Repr::string(s))
+    Int(i) => Repr::opaque_("Int", Repr::integer(i.to_string()))
+    Float(f) => Repr::opaque_("Float", Repr::double(f))
+    Bool(b) => Repr::opaque_("Bool", Repr::bool(b))
+    Datetime(dt) => Repr::opaque_("Datetime", Repr::string(encode_datetime(dt)))
+    Array(items) => {
+      let children : Array[Repr] = []
+      for item in items {
+        children.push(@debug.Debug::to_repr(item))
+      }
+      Repr::opaque_("Array", Repr::array(children))
+    }
+    Table(t) => {
+      let fields : Map[String, Repr] = Map([])
+      for k in t.keys() {
+        let v = match t.get(k) {
+          Some(v) => v
+          None => abort("unreachable")
+        }
+        fields[k] = @debug.Debug::to_repr(v)
+      }
+      Repr::record(fields)
+    }
+  }
+}
+
+///|
 /// The TOML type name of the value, one of:
 /// `string`, `integer`, `float`, `boolean`, `datetime`, `datetime-local`,
 /// `date-local`, `time-local`, `array`, `table`.
